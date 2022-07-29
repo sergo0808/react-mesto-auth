@@ -1,4 +1,5 @@
 import React from "react";
+import { Redirect, Route, Switch, useHistory } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { api } from "../utils/Api";
 import Header from "./Header";
@@ -10,15 +11,69 @@ import EditAvatarPopup from "./EditAvatarPopup";
 import AddPlacePopup from "./AddPlacePopup";
 import ImagePopup from "./ImagePopup";
 import PopupWithConfirm from "./PopupWithConfirm";
+import Login from "./Login";
+import Register from "./Register";
+import ProtectedRoute from "./ProtectedRoute";
+import InfoTooltip from "./InfoTooltip";
 import { CurrentUserContext } from "../contexts/CurrentUserContext";
+import * as CardAuth from "../utils/Auth";
 
 function App() {
   const [currentUser, setCurrentUser] = useState({});
   const [selectedCard, setSelectedCard] = useState(null);
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
+  const [isWarningPopupOpen, setIsWarningPopupOpen] = useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
   const [cards, setCards] = useState([]);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [userData, setUserData] = useState({});
+  const history = useHistory();
+
+  const auth = async (jwt) => {
+    const content = await CardAuth.getContent(jwt).then((res) => {
+      if (res) {
+        console.log(setUserData);
+        const { email, password } = res;
+        setLoggedIn(true);
+        setUserData({
+          email,
+          password,
+        });
+      }
+    });
+    return content;
+  };
+
+  useEffect(() => {
+    const jwt = localStorage.getItem("jwt");
+    if (jwt) {
+      auth(jwt);
+    }
+  }, [loggedIn]);
+
+  useEffect(() => {
+    if (loggedIn) {
+      history.push("/");
+    }
+  }, [loggedIn]);
+
+  const onLogin = ({ email, password }) => {
+    return CardAuth.authorize(email, password).then((res) => {
+      if (res.jwt) {
+        console.log(res);
+        localStorage.setItem("jwt", res.jwt);
+        setLoggedIn(true);
+      }
+    });
+  };
+
+  const onRegister = ({ email, password }) => {
+    return CardAuth.register(email, password).then((res) => {
+      if (!res || res.statusCode === 400) throw new Error("Что-то пошло не так");
+      return res;
+    });
+  };
 
   function getUserInfo() {
     Promise.all([api.getUserInfo(), api.getInitialCards()])
@@ -64,6 +119,10 @@ function App() {
 
   const handleEditProfileClick = () => {
     setIsEditProfilePopupOpen(true);
+  };
+
+  const handleWarnihPopupClick = () => {
+    setIsWarningPopupOpen(true);
   };
 
   const handleEditAvatarClick = () => {
@@ -114,23 +173,43 @@ function App() {
   return (
     <CurrentUserContext.Provider value={currentUser}>
       <div className="page">
-        <Header />
-        <Main
-          onEditProfile={handleEditProfileClick}
-          onAddPlace={handleAddPlaceClick}
-          onEditAvatar={handleEditAvatarClick}
-          onCardClick={handleCardClick}
-          cards={cards}
-          onCardLike={handleCardLike}
-          onCardDelete={handleCardDelete}
-        />
-        <Footer />
+        <Header loggedIn={loggedIn} />
+        <Switch>
+          <ProtectedRoute
+            exact
+            path="/"
+            loggedIn={loggedIn}
+            component={Main}
+            onEditProfile={handleEditProfileClick}
+            onAddPlace={handleAddPlaceClick}
+            onEditAvatar={handleEditAvatarClick}
+            onCardClick={handleCardClick}
+            cards={cards}
+            onCardLike={handleCardLike}
+            onCardDelete={handleCardDelete}
+          />
+          <Route path="/signin">
+            <Login onLogin={onLogin} />
+          </Route>
+          <Route path="/signup">
+            <Register onRegister={onRegister} />
+          </Route>
+          <Route path="/">{loggedIn ? <Redirect to="/" /> : <Redirect to="/signin" />}</Route>
+        </Switch>
         <ImagePopup card={selectedCard} onClose={closeAllPopups}></ImagePopup>
         <EditProfilePopup isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} onUpdateUser={handleUpdateUser} />
         <EditAvatarPopup isOpen={isEditAvatarPopupOpen} onClose={closeAllPopups} onUpdateAvatar={handleUpdateAvatar} />
         <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} onAddCard={handleAddCard} />
         <PopupWithForm title="Вы уверены ?" name="Confirm" />
         <PopupWithConfirm></PopupWithConfirm>
+        <InfoTooltip
+          name="Confirm"
+          isOpen={isWarningPopupOpen}
+          onWarningPopup={handleWarnihPopupClick}
+          onClose={closeAllPopups}
+          typeWarning="error"
+        />
+        <Footer />
       </div>
     </CurrentUserContext.Provider>
   );

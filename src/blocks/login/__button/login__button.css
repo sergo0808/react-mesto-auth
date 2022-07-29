@@ -1,0 +1,30 @@
+.login__submit {
+  width: 345px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  margin-top: 218px;
+  background-color: white;
+  color: black;
+  cursor: pointer;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 22px;
+  text-align: center;
+  border: none;
+}
+
+.popup__submit:hover {
+  opacity: 0.8;
+}
+
+@media screen and (max-width: 600px) {
+  .login__submit {
+    height: 46px;
+    max-width: 238px;
+    margin-left: 22px;
+    font-size: 14px;
+    line-height: 17px;
+    margin-top: 182px;
+    margin-bottom: 25px;
+  }
+}

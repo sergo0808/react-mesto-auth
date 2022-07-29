@@ -1,0 +1,22 @@
+.login__input {
+  margin-top: 28px;
+  width: 358px;
+  padding-bottom: 8px;
+  border: none;
+  border-bottom: 2px solid #CCCCCC;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 17px;
+  outline: none;
+  color: white;
+  background-color: black;
+  
+}
+
+@media screen and (max-width: 600px) {
+  .popup__input {
+    max-width: 238px;
+  }
+}
+
+
