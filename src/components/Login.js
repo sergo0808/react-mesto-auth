@@ -29,6 +29,7 @@ const Login = ({ onLogin }) => {
           minLength="2"
           maxLength="40"
           onChange={({ target }) => setEmail(target.value)}
+          autoComplete="on"
           required
         />
         {/* <span className="popup__error" id="name-email-error"></span> */}
@@ -41,6 +42,7 @@ const Login = ({ onLogin }) => {
           minLength="2"
           maxLength="200"
           onChange={({ target }) => setPassword(target.value)}
+          autoComplete="on"
           required
         />
         {/* <span className="popup__error" id="password-profile-error"></span> */}

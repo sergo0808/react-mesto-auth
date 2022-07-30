@@ -26,9 +26,10 @@ const Register = ({ onRegister }) => {
           maxLength="40"
           value={email}
           onChange={({ target }) => setEmail(target.value)}
+          autoComplete="on"
           required
         />
-        {/* <span className="popup__error" id="name-email-error"></span> */}
+
         <input
           type="password"
           className="login__input login__input_password_active"

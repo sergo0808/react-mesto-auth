@@ -27,28 +27,29 @@ function App() {
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
   const [cards, setCards] = useState([]);
   const [loggedIn, setLoggedIn] = useState(false);
-  const [userData, setUserData] = useState({});
+  const [userData, setUserData] = useState();
+  const [message, setMessage] = useState("");
   const history = useHistory();
 
-  const auth = async (jwt) => {
-    const content = await CardAuth.getContent(jwt).then((res) => {
-      if (res) {
-        console.log(setUserData);
-        const { email, password } = res;
+  const signOut = () => {
+    localStorage.removeItem("token");
+    history.push("/signin");
+  };
+
+  const auth = async (token) => {
+    const content = await CardAuth.getContent(token).then((data) => {
+      if (data) {
         setLoggedIn(true);
-        setUserData({
-          email,
-          password,
-        });
+        setUserData(data.data.email);
       }
     });
     return content;
   };
 
   useEffect(() => {
-    const jwt = localStorage.getItem("jwt");
-    if (jwt) {
-      auth(jwt);
+    const token = localStorage.getItem("token");
+    if (token) {
+      auth(token);
     }
   }, [loggedIn]);
 
@@ -60,19 +61,23 @@ function App() {
 
   const onLogin = ({ email, password }) => {
     return CardAuth.authorize(email, password).then((res) => {
-      if (res.jwt) {
-        console.log(res);
-        localStorage.setItem("jwt", res.jwt);
+      if (res.token) {
+        localStorage.setItem("token", res.token);
         setLoggedIn(true);
       }
     });
   };
 
   const onRegister = ({ email, password }) => {
-    return CardAuth.register(email, password).then((res) => {
-      if (!res || res.statusCode === 400) throw new Error("Что-то пошло не так");
-      return res;
-    });
+    return CardAuth.register(email, password)
+      .then((res) => {
+        setMessage(res.error);
+        setIsWarningPopupOpen(true);
+      })
+      .catch((res) => {
+        setMessage(res.error);
+        setIsWarningPopupOpen(true);
+      });
   };
 
   function getUserInfo() {
@@ -121,7 +126,7 @@ function App() {
     setIsEditProfilePopupOpen(true);
   };
 
-  const handleWarnihPopupClick = () => {
+  const handleWarningPopupClick = () => {
     setIsWarningPopupOpen(true);
   };
 
@@ -137,6 +142,7 @@ function App() {
     setIsEditProfilePopupOpen(false);
     setIsEditAvatarPopupOpen(false);
     setIsAddPlacePopupOpen(false);
+    setIsWarningPopupOpen(false);
     setSelectedCard(null);
   };
 
@@ -173,7 +179,7 @@ function App() {
   return (
     <CurrentUserContext.Provider value={currentUser}>
       <div className="page">
-        <Header loggedIn={loggedIn} />
+        <Header loggedIn={loggedIn} userData={userData} signOut={signOut} />
         <Switch>
           <ProtectedRoute
             exact
@@ -200,15 +206,18 @@ function App() {
         <EditProfilePopup isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} onUpdateUser={handleUpdateUser} />
         <EditAvatarPopup isOpen={isEditAvatarPopupOpen} onClose={closeAllPopups} onUpdateAvatar={handleUpdateAvatar} />
         <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} onAddCard={handleAddCard} />
-        <PopupWithForm title="Вы уверены ?" name="Confirm" />
-        <PopupWithConfirm></PopupWithConfirm>
         <InfoTooltip
+          message={message}
+          typeWarning="error"
           name="Confirm"
           isOpen={isWarningPopupOpen}
-          onWarningPopup={handleWarnihPopupClick}
+          onWarningPopup={handleWarningPopupClick}
           onClose={closeAllPopups}
-          typeWarning="error"
         />
+
+        <PopupWithForm title="Вы уверены ?" name="Confirm" />
+        <PopupWithConfirm></PopupWithConfirm>
+
         <Footer />
       </div>
     </CurrentUserContext.Provider>
