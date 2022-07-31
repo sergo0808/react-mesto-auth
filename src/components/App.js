@@ -27,12 +27,13 @@ function App() {
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
   const [cards, setCards] = useState([]);
   const [loggedIn, setLoggedIn] = useState(false);
-  const [userData, setUserData] = useState();
+  const [userData, setUserData] = useState("");
   const [message, setMessage] = useState("");
   const history = useHistory();
 
   const signOut = () => {
     localStorage.removeItem("token");
+    setLoggedIn(false);
     history.push("/signin");
   };
 
@@ -82,17 +83,9 @@ function App() {
 
   function getUserInfo() {
     Promise.all([api.getUserInfo(), api.getInitialCards()])
-      .then(([data, response]) => {
-        setCurrentUser({ ...currentUser, name: data.name, about: data.about, avatar: data.avatar, _id: data._id });
-        setCards(
-          response.map((item) => ({
-            _id: item._id,
-            link: item.link,
-            name: item.name,
-            likes: item.likes,
-            owner: item.owner,
-          }))
-        );
+      .then(([user, cards]) => {
+        setCurrentUser(user);
+        setCards(cards);
       })
       .catch((err) => console.log(err));
   }
@@ -179,7 +172,7 @@ function App() {
   return (
     <CurrentUserContext.Provider value={currentUser}>
       <div className="page">
-        <Header loggedIn={loggedIn} userData={userData} signOut={signOut} />
+        <Header userData={userData} signOut={signOut} />
         <Switch>
           <ProtectedRoute
             exact

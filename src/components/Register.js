@@ -9,7 +9,7 @@ const Register = ({ onRegister }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onRegister({ email, password }).then(() => history.push("/login"));
+    onRegister({ email, password }).then(() => history.push("/signin"));
   };
 
   return (
